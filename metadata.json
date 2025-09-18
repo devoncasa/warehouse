@@ -1,0 +1,5 @@
+{
+  "name": "Warehouse Comparison Tool",
+  "description": "An application to input, compare, and record warehouse profiles, with an option to export the data to an Excel file. This tool helps in evaluating multiple warehouse options based on various criteria.",
+  "requestFramePermissions": []
+}

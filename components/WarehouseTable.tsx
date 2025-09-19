@@ -8,6 +8,23 @@ interface WarehouseTableProps {
   onRemove: (id: number) => void;
 }
 
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <div className="pt-5">
+    <h3 className="text-lg font-semibold text-stone-700 border-b border-stone-200 pb-2 mb-4">{title}</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
+      {children}
+    </div>
+  </div>
+);
+
+const Label: React.FC<{ htmlFor: string; title: string; description: string }> = ({ htmlFor, title, description }) => (
+    <label htmlFor={htmlFor} className="block text-base font-medium text-stone-700 mb-1.5">
+        {title}
+        <span className="block text-stone-500 font-normal text-sm">{description}</span>
+    </label>
+);
+
+
 const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, onRemove }) => {
   const [errors, setErrors] = useState<Record<number, Partial<Record<keyof Warehouse, string>>>>({});
   
@@ -33,119 +50,200 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
     onUpdate(id, field, value === '' ? '' : numValue);
   };
   
-  const commonInputClass = "w-full text-lg p-2.5 border rounded-md bg-white disabled:bg-stone-50";
-  const validBorderClass = "border-stone-300 focus:ring-stone-500 focus:border-stone-500";
-  const invalidBorderClass = "border-red-500 focus:ring-red-500 focus:border-red-500";
+  // --- Refactored Styles ---
+  const baseInputStyles = "block w-full text-base p-2.5 border rounded-md shadow-sm transition-colors duration-200 bg-white";
+  const focusStyles = "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500";
+  const normalBorderStyles = "border-stone-300";
+  const errorBorderStyles = "border-red-500 text-red-900 placeholder-red-300";
+
+  const getInputClassName = (hasError: boolean) => `${baseInputStyles} ${focusStyles} ${hasError ? errorBorderStyles : normalBorderStyles}`;
   
-  const commonSelectClass = "w-full text-lg p-2.5 border border-stone-300 rounded-md focus:ring-stone-500 focus:border-stone-500 bg-white";
-  const commonLabelClass = "block text-base font-medium text-stone-700 mb-1.5";
+  const disabledInputStyles = "bg-stone-100 border-stone-300 text-stone-600 cursor-not-allowed";
+
 
   return (
     <div className="space-y-8">
       {warehouses.map((w, index) => (
         <div key={w.id} className="bg-white p-6 rounded-lg shadow-lg relative transition-shadow hover:shadow-xl">
-          <div className="flex justify-between items-center mb-6 border-b border-stone-200 pb-4">
+          <div className="flex justify-between items-center mb-2 border-b border-stone-200 pb-4">
             <h2 className="text-2xl font-bold text-stone-800">
               ข้อมูลโกดัง #{index + 1}
             </h2>
             <button 
                 onClick={() => onRemove(w.id)} 
-                className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors"
+                className={`text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors ${focusStyles}`}
                 aria-label={`Remove warehouse ${index + 1}`}
             >
               <TrashIcon />
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
+          <Section title="1. ข้อมูลทั่วไป (General Information)">
             <div className="lg:col-span-2">
-              <label htmlFor={`projectName-${w.id}`} className={commonLabelClass}>ชื่อโครงการ/เจ้าของ</label>
-              <input id={`projectName-${w.id}`} type="text" value={w.projectName} onChange={(e) => onUpdate(w.id, 'projectName', e.target.value)} className={`${commonInputClass} ${validBorderClass}`} />
+              <Label htmlFor={`projectName-${w.id}`} title="ชื่อโครงการ/เจ้าของ" description="Project Name/Owner" />
+              <input id={`projectName-${w.id}`} type="text" value={w.projectName} onChange={(e) => onUpdate(w.id, 'projectName', e.target.value)} className={getInputClassName(false)} />
             </div>
             <div className="lg:col-span-2">
-              <label htmlFor={`location-${w.id}`} className={commonLabelClass}>ที่ตั้ง (กม.)</label>
-              <input id={`location-${w.id}`} type="text" value={w.location} onChange={(e) => onUpdate(w.id, 'location', e.target.value)} placeholder="เช่น บางนา กม.25" className={`${commonInputClass} ${validBorderClass}`} />
+              <Label htmlFor={`location-${w.id}`} title="ที่ตั้ง (กม.)" description="Location (KM)" />
+              <input id={`location-${w.id}`} type="text" value={w.location} onChange={(e) => onUpdate(w.id, 'location', e.target.value)} placeholder="เช่น บางนา กม.25" className={getInputClassName(false)} />
             </div>
             <div className="lg:col-span-4">
-              <label htmlFor={`googleMapsLink-${w.id}`} className={commonLabelClass}>ลิงก์ Google Maps</label>
-              <input id={`googleMapsLink-${w.id}`} type="url" value={w.googleMapsLink} onChange={(e) => onUpdate(w.id, 'googleMapsLink', e.target.value)} placeholder="https://maps.app.goo.gl/..." className={`${commonInputClass} ${validBorderClass}`} />
+              <Label htmlFor={`googleMapsLink-${w.id}`} title="ลิงก์ Google Maps" description="Google Maps Link" />
+              <input id={`googleMapsLink-${w.id}`} type="url" value={w.googleMapsLink} onChange={(e) => onUpdate(w.id, 'googleMapsLink', e.target.value)} placeholder="https://maps.app.goo.gl/..." className={getInputClassName(false)} />
             </div>
              <div>
-              <label htmlFor={`area-${w.id}`} className={commonLabelClass}>พื้นที่ใช้สอย (ตร.ม.)</label>
-              <input id={`area-${w.id}`} type="number" value={w.area} onChange={(e) => handleNumericChange(w.id, 'area', e.target.value)} placeholder="7150" className={`${commonInputClass} ${errors[w.id]?.area ? invalidBorderClass : validBorderClass }`} aria-invalid={!!errors[w.id]?.area} aria-describedby={`area-error-${w.id}`}/>
-              {errors[w.id]?.area && <p id={`area-error-${w.id}`} className="mt-1 text-sm text-red-600">{errors[w.id]?.area}</p>}
+              <Label htmlFor={`area-${w.id}`} title="พื้นที่ใช้สอย (ตร.ม.)" description="Usable Area (sqm)" />
+              <input id={`area-${w.id}`} type="number" value={w.area} onChange={(e) => handleNumericChange(w.id, 'area', e.target.value)} placeholder="7150" className={getInputClassName(!!errors[w.id]?.area)} />
+              {errors[w.id]?.area && <p className="mt-1 text-sm text-red-600">{errors[w.id]?.area}</p>}
             </div>
             <div>
-              <label htmlFor={`height-${w.id}`} className={commonLabelClass}>ความสูง (ม.)</label>
-              <input id={`height-${w.id}`} type="number" value={w.height} onChange={(e) => handleNumericChange(w.id, 'height', e.target.value)} placeholder="10" className={`${commonInputClass} ${errors[w.id]?.height ? invalidBorderClass : validBorderClass }`} aria-invalid={!!errors[w.id]?.height} aria-describedby={`height-error-${w.id}`}/>
-               {errors[w.id]?.height && <p id={`height-error-${w.id}`} className="mt-1 text-sm text-red-600">{errors[w.id]?.height}</p>}
+              <Label htmlFor={`usableAreaBreakdown-${w.id}`} title="สัดส่วนพื้นที่" description="Area Breakdown" />
+              <input id={`usableAreaBreakdown-${w.id}`} type="text" value={w.usableAreaBreakdown} onChange={(e) => onUpdate(w.id, 'usableAreaBreakdown', e.target.value)} placeholder="โกดัง 7000, ออฟฟิศ 150" className={getInputClassName(false)} />
+            </div>
+             <div>
+              <Label htmlFor={`buildingType-${w.id}`} title="ลักษณะอาคาร" description="Building Type" />
+              <input id={`buildingType-${w.id}`} type="text" value={w.buildingType} onChange={(e) => onUpdate(w.id, 'buildingType', e.target.value)} placeholder="อาคารเดี่ยว" className={getInputClassName(false)} />
             </div>
             <div>
-              <label htmlFor={`rentPerSqm-${w.id}`} className={commonLabelClass}>ค่าเช่า (บาท/ตร.ม.)</label>
-              <input id={`rentPerSqm-${w.id}`} type="number" value={w.rentPerSqm} onChange={(e) => handleNumericChange(w.id, 'rentPerSqm', e.target.value)} placeholder="150" className={`${commonInputClass} ${errors[w.id]?.rentPerSqm ? invalidBorderClass : validBorderClass }`} aria-invalid={!!errors[w.id]?.rentPerSqm} aria-describedby={`rentPerSqm-error-${w.id}`}/>
-               {errors[w.id]?.rentPerSqm && <p id={`rentPerSqm-error-${w.id}`} className="mt-1 text-sm text-red-600">{errors[w.id]?.rentPerSqm}</p>}
+              <Label htmlFor={`height-${w.id}`} title="ความสูง (ม.)" description="Clear Height (m)" />
+              <input id={`height-${w.id}`} type="number" value={w.height} onChange={(e) => handleNumericChange(w.id, 'height', e.target.value)} placeholder="10" className={getInputClassName(!!errors[w.id]?.height)} />
+               {errors[w.id]?.height && <p className="mt-1 text-sm text-red-600">{errors[w.id]?.height}</p>}
             </div>
-             <div className="flex flex-col justify-end">
-              <label className={commonLabelClass}>ราคารวม (ต่อเดือน)</label>
-              <span className="font-mono text-xl text-stone-900 mt-1 h-[50px] flex items-center px-2.5">
-                {w.totalPrice > 0 ? w.totalPrice.toLocaleString('th-TH', { style: 'currency', currency: 'THB' }).replace('฿', '') : 'คำนวณอัตโนมัติ'}
-              </span>
+          </Section>
+
+          <Section title="2. ค่าใช้จ่ายและสัญญาเช่า (Costs & Lease)">
+            <div>
+              <Label htmlFor={`rentPerSqm-${w.id}`} title="ค่าเช่า (บาท/ตร.ม.)" description="Rental Rate (THB/sqm)" />
+              <input id={`rentPerSqm-${w.id}`} type="number" value={w.rentPerSqm} onChange={(e) => handleNumericChange(w.id, 'rentPerSqm', e.target.value)} placeholder="150" className={getInputClassName(!!errors[w.id]?.rentPerSqm)} />
+               {errors[w.id]?.rentPerSqm && <p className="mt-1 text-sm text-red-600">{errors[w.id]?.rentPerSqm}</p>}
+            </div>
+             <div>
+              <Label htmlFor={`totalPrice-${w.id}`} title="ราคารวม (ต่อเดือน)" description="Total Price (per month)" />
+              <div id={`totalPrice-${w.id}`} className={`${baseInputStyles} ${disabledInputStyles} flex items-center`}>
+                 {w.totalPrice > 0 ? w.totalPrice.toLocaleString('th-TH') : 'คำนวณอัตโนมัติ'}
+              </div>
             </div>
             <div>
-              <label htmlFor={`depositMonths-${w.id}`} className={commonLabelClass}>เงินมัดจำ (เดือน)</label>
-              <input id={`depositMonths-${w.id}`} type="number" value={w.depositMonths} onChange={(e) => handleNumericChange(w.id, 'depositMonths', e.target.value)} placeholder="3" className={`${commonInputClass} ${errors[w.id]?.depositMonths ? invalidBorderClass : validBorderClass }`} aria-invalid={!!errors[w.id]?.depositMonths} aria-describedby={`depositMonths-error-${w.id}`}/>
-               {errors[w.id]?.depositMonths && <p id={`depositMonths-error-${w.id}`} className="mt-1 text-sm text-red-600">{errors[w.id]?.depositMonths}</p>}
+              <Label htmlFor={`depositMonths-${w.id}`} title="เงินมัดจำ (เดือน)" description="Deposit (months)" />
+              <input id={`depositMonths-${w.id}`} type="number" value={w.depositMonths} onChange={(e) => handleNumericChange(w.id, 'depositMonths', e.target.value)} placeholder="3" className={getInputClassName(!!errors[w.id]?.depositMonths)} />
+               {errors[w.id]?.depositMonths && <p className="mt-1 text-sm text-red-600">{errors[w.id]?.depositMonths}</p>}
+            </div>
+             <div className="lg:col-span-2">
+                <Label htmlFor={`leaseTerms-${w.id}`} title="เงื่อนไขสัญญา" description="Lease Terms" />
+                <input id={`leaseTerms-${w.id}`} type="text" value={w.leaseTerms} onChange={(e) => onUpdate(w.id, 'leaseTerms', e.target.value)} placeholder="ขั้นต่ำ 3 ปี, ขึ้นค่าเช่า 5% ทุก 3 ปี" className={getInputClassName(false)} />
+            </div>
+            <div className="lg:col-span-2">
+                <Label htmlFor={`hiddenCosts-${w.id}`} title="ค่าใช้จ่ายแฝง" description="Hidden Costs" />
+                <input id={`hiddenCosts-${w.id}`} type="text" value={w.hiddenCosts} onChange={(e) => onUpdate(w.id, 'hiddenCosts', e.target.value)} placeholder="ค่าส่วนกลาง, ภาษีโรงเรือน" className={getInputClassName(false)} />
+            </div>
+          </Section>
+
+          <Section title="3. โครงสร้างอาคารและคุณสมบัติ (Structure & Specs)">
+             <div>
+              <Label htmlFor={`floorLoad-${w.id}`} title="พื้นรับน้ำหนัก (ตัน/ตร.ม.)" description="Floor Load (ton/sqm)" />
+              <input id={`floorLoad-${w.id}`} type="number" value={w.floorLoad} onChange={(e) => handleNumericChange(w.id, 'floorLoad', e.target.value)} placeholder="3" className={getInputClassName(!!errors[w.id]?.floorLoad)} />
+               {errors[w.id]?.floorLoad && <p className="mt-1 text-sm text-red-600">{errors[w.id]?.floorLoad}</p>}
             </div>
             <div>
-              <label htmlFor={`floorLoad-${w.id}`} className={commonLabelClass}>พื้นรับน้ำหนัก (ตัน/ตร.ม.)</label>
-              <input id={`floorLoad-${w.id}`} type="number" value={w.floorLoad} onChange={(e) => handleNumericChange(w.id, 'floorLoad', e.target.value)} placeholder="3" className={`${commonInputClass} ${errors[w.id]?.floorLoad ? invalidBorderClass : validBorderClass }`} aria-invalid={!!errors[w.id]?.floorLoad} aria-describedby={`floorLoad-error-${w.id}`}/>
-               {errors[w.id]?.floorLoad && <p id={`floorLoad-error-${w.id}`} className="mt-1 text-sm text-red-600">{errors[w.id]?.floorLoad}</p>}
+              <Label htmlFor={`loadingBays-${w.id}`} title="Loading Bay" description="ช่องขนถ่ายสินค้า" />
+              <input id={`loadingBays-${w.id}`} type="number" value={w.loadingBays} onChange={(e) => handleNumericChange(w.id, 'loadingBays', e.target.value)} placeholder="6" className={getInputClassName(false)} />
+            </div>
+             <div>
+              <Label htmlFor={`dockLeveler-${w.id}`} title="Dock Leveler" description="สะพานปรับระดับ" />
+              <select id={`dockLeveler-${w.id}`} value={w.hasDockLeveler} onChange={(e) => onUpdate(w.id, 'hasDockLeveler', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+            </div>
+             <div>
+                <Label htmlFor={`roofStructure-${w.id}`} title="โครงสร้างหลังคา" description="Roof Structure" />
+                <input id={`roofStructure-${w.id}`} type="text" value={w.roofStructure} onChange={(e) => onUpdate(w.id, 'roofStructure', e.target.value)} placeholder="มีฉนวน, skylight" className={getInputClassName(false)} />
+            </div>
+          </Section>
+
+          <Section title="4. ระบบสาธารณูปโภค (Utilities)">
+            <div>
+              <Label htmlFor={`electricity-${w.id}`} title="ไฟฟ้า (KVA)" description="Electricity (KVA)" />
+              <input id={`electricity-${w.id}`} type="text" value={w.electricity} onChange={(e) => onUpdate(w.id, 'electricity', e.target.value)} placeholder="315" className={getInputClassName(false)} />
+            </div>
+             <div>
+                <Label htmlFor={`waterSupply-${w.id}`} title="ระบบน้ำประปา" description="Water Supply" />
+                <input id={`waterSupply-${w.id}`} type="text" value={w.waterSupply} onChange={(e) => onUpdate(w.id, 'waterSupply', e.target.value)} placeholder="เพียงพอ, ประปาส่วนภูมิภาค" className={getInputClassName(false)} />
+            </div>
+             <div>
+                <Label htmlFor={`wasteManagement-${w.id}`} title="การจัดการน้ำเสีย" description="Waste Management" />
+                <input id={`wasteManagement-${w.id}`} type="text" value={w.wasteManagement} onChange={(e) => onUpdate(w.id, 'wasteManagement', e.target.value)} placeholder="มีบ่อบำบัด" className={getInputClassName(false)} />
             </div>
             <div>
-              <label htmlFor={`loadingBays-${w.id}`} className={commonLabelClass}>Loading Bay</label>
-              <input id={`loadingBays-${w.id}`} type="number" value={w.loadingBays} onChange={(e) => handleNumericChange(w.id, 'loadingBays', e.target.value)} placeholder="6" className={`${commonInputClass} ${validBorderClass}`} />
+              <Label htmlFor={`fiberOptic-${w.id}`} title="Fiber Optic" description="อินเทอร์เน็ตความเร็วสูง" />
+              <select id={`fiberOptic-${w.id}`} value={w.hasFiberOptic} onChange={(e) => onUpdate(w.id, 'hasFiberOptic', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+            </div>
+          </Section>
+
+          <Section title="5. ระบบความปลอดภัยและสิ่งอำนวยความสะดวก (Safety & Facilities)">
+            <div>
+              <Label htmlFor={`security-${w.id}`} title="รปภ. 24 ชม." description="24h Security" />
+              <select id={`security-${w.id}`} value={w.hasSecurity} onChange={(e) => onUpdate(w.id, 'hasSecurity', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+            </div>
+             <div>
+              <Label htmlFor={`cctv-${w.id}`} title="CCTV" description="กล้องวงจรปิด" />
+              <select id={`cctv-${w.id}`} value={w.cctv} onChange={(e) => onUpdate(w.id, 'cctv', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
             </div>
             <div>
-              <label htmlFor={`electricity-${w.id}`} className={commonLabelClass}>ไฟฟ้า (KVA)</label>
-              <input id={`electricity-${w.id}`} type="text" value={w.electricity} onChange={(e) => onUpdate(w.id, 'electricity', e.target.value)} placeholder="315" className={`${commonInputClass} ${validBorderClass}`} />
+              <Label htmlFor={`sprinkler-${w.id}`} title="Sprinkler" description="ระบบพ่นน้ำดับเพลิง" />
+              <select id={`sprinkler-${w.id}`} value={w.hasSprinkler} onChange={(e) => onUpdate(w.id, 'hasSprinkler', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
             </div>
             <div>
-              <label htmlFor={`dockLeveler-${w.id}`} className={commonLabelClass}>Dock Leveler</label>
-              <select id={`dockLeveler-${w.id}`} value={w.hasDockLeveler} onChange={(e) => onUpdate(w.id, 'hasDockLeveler', e.target.value)} className={commonSelectClass}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+                <Label htmlFor={`fireSafetySystems-${w.id}`} title="ระบบป้องกันอัคคีภัยอื่นๆ" description="Other Fire Safety Systems" />
+                <input id={`fireSafetySystems-${w.id}`} type="text" value={w.fireSafetySystems} onChange={(e) => onUpdate(w.id, 'fireSafetySystems', e.target.value)} placeholder="Fire Alarm, Hydrant" className={getInputClassName(false)} />
+            </div>
+            <div className="lg:col-span-2">
+                <Label htmlFor={`parking-${w.id}`} title="ที่จอดรถ" description="Parking" />
+                <input id={`parking-${w.id}`} type="text" value={w.parking} onChange={(e) => onUpdate(w.id, 'parking', e.target.value)} placeholder="รถบรรทุก 10, รถยนต์ 20" className={getInputClassName(false)} />
+            </div>
+            <div className="lg:col-span-2">
+                <Label htmlFor={`officeFacilities-${w.id}`} title="สิ่งอำนวยความสะดวกออฟฟิศ" description="Office Facilities" />
+                <input id={`officeFacilities-${w.id}`} type="text" value={w.officeFacilities} onChange={(e) => onUpdate(w.id, 'officeFacilities', e.target.value)} placeholder="ห้องประชุม, ห้องน้ำ" className={getInputClassName(false)} />
+            </div>
+          </Section>
+
+          <Section title="6. การคมนาคมและโลจิสติกส์ (Transport & Logistics)">
+             <div>
+              <Label htmlFor={`expressway-${w.id}`} title="ใกล้ทางด่วน" description="Near Expressway" />
+              <select id={`expressway-${w.id}`} value={w.nearExpressway} onChange={(e) => onUpdate(w.id, 'nearExpressway', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+            </div>
+            <div className="lg:col-span-2">
+                <Label htmlFor={`logisticsProximity-${w.id}`} title="ความใกล้แหล่งโลจิสติกส์" description="Logistics Proximity" />
+                <input id={`logisticsProximity-${w.id}`} type="text" value={w.logisticsProximity} onChange={(e) => onUpdate(w.id, 'logisticsProximity', e.target.value)} placeholder="สนามบินสุวรรณภูมิ, ท่าเรือคลองเตย" className={getInputClassName(false)} />
+            </div>
+             <div>
+                <Label htmlFor={`truckAccessRestrictions-${w.id}`} title="ข้อจำกัดรถบรรทุก" description="Truck Access Restrictions" />
+                <input id={`truckAccessRestrictions-${w.id}`} type="text" value={w.truckAccessRestrictions} onChange={(e) => onUpdate(w.id, 'truckAccessRestrictions', e.target.value)} placeholder="ไม่มีจำกัดเวลา" className={getInputClassName(false)} />
+            </div>
+          </Section>
+
+          <Section title="7. ศักยภาพและความเสี่ยง (Potential & Risks)">
+             <div>
+              <Label htmlFor={`purpleZone-${w.id}`} title="พื้นที่สีม่วง" description="Purple Zone" />
+              <select id={`purpleZone-${w.id}`} value={w.isPurpleZone} onChange={(e) => onUpdate(w.id, 'isPurpleZone', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
             </div>
             <div>
-              <label htmlFor={`fiberOptic-${w.id}`} className={commonLabelClass}>Fiber Optic</label>
-              <select id={`fiberOptic-${w.id}`} value={w.hasFiberOptic} onChange={(e) => onUpdate(w.id, 'hasFiberOptic', e.target.value)} className={commonSelectClass}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+              <Label htmlFor={`ror4-${w.id}`} title="ใบอนุญาต รง.4" description="Factory License (Ror.4)" />
+              <select id={`ror4-${w.id}`} value={w.hasRor4} onChange={(e) => onUpdate(w.id, 'hasRor4', e.target.value)} className={getInputClassName(false)}>{ror4Options.map(o => <option key={o} value={o}>{o}</option>)}</select>
             </div>
             <div>
-              <label htmlFor={`security-${w.id}`} className={commonLabelClass}>รปภ. 24 ชม.</label>
-              <select id={`security-${w.id}`} value={w.hasSecurity} onChange={(e) => onUpdate(w.id, 'hasSecurity', e.target.value)} className={commonSelectClass}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+              <Label htmlFor={`floodRisk-${w.id}`} title="ความเสี่ยงน้ำท่วม" description="Flood Risk" />
+              <select id={`floodRisk-${w.id}`} value={w.floodRisk} onChange={(e) => onUpdate(w.id, 'floodRisk', e.target.value)} className={getInputClassName(false)}>{floodRiskOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
             </div>
-            <div>
-              <label htmlFor={`sprinkler-${w.id}`} className={commonLabelClass}>Sprinkler</label>
-              <select id={`sprinkler-${w.id}`} value={w.hasSprinkler} onChange={(e) => onUpdate(w.id, 'hasSprinkler', e.target.value)} className={commonSelectClass}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
+             <div>
+                <Label htmlFor={`expansionPotential-${w.id}`} title="ศักยภาพขยายพื้นที่" description="Expansion Potential" />
+                <input id={`expansionPotential-${w.id}`} type="text" value={w.expansionPotential} onChange={(e) => onUpdate(w.id, 'expansionPotential', e.target.value)} placeholder="สามารถขยายได้ในอนาคต" className={getInputClassName(false)} />
             </div>
-            <div>
-              <label htmlFor={`expressway-${w.id}`} className={commonLabelClass}>ใกล้ทางด่วน</label>
-              <select id={`expressway-${w.id}`} value={w.nearExpressway} onChange={(e) => onUpdate(w.id, 'nearExpressway', e.target.value)} className={commonSelectClass}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
-            </div>
-            <div>
-              <label htmlFor={`purpleZone-${w.id}`} className={commonLabelClass}>พื้นที่สีม่วง</label>
-              <select id={`purpleZone-${w.id}`} value={w.isPurpleZone} onChange={(e) => onUpdate(w.id, 'isPurpleZone', e.target.value)} className={commonSelectClass}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
-            </div>
-            <div>
-              <label htmlFor={`ror4-${w.id}`} className={commonLabelClass}>ใบอนุญาต รง.4</label>
-              <select id={`ror4-${w.id}`} value={w.hasRor4} onChange={(e) => onUpdate(w.id, 'hasRor4', e.target.value)} className={commonSelectClass}>{ror4Options.map(o => <option key={o} value={o}>{o}</option>)}</select>
-            </div>
-            <div>
-              <label htmlFor={`floodRisk-${w.id}`} className={commonLabelClass}>ความเสี่ยงน้ำท่วม</label>
-              <select id={`floodRisk-${w.id}`} value={w.floodRisk} onChange={(e) => onUpdate(w.id, 'floodRisk', e.target.value)} className={commonSelectClass}>{floodRiskOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
-            </div>
+          </Section>
+
+          <Section title="8. หมายเหตุ/จุดเด่น (Notes / Highlights)">
             <div className="lg:col-span-4">
-              <label htmlFor={`notes-${w.id}`} className={commonLabelClass}>หมายเหตุ/จุดเด่น</label>
-              <input id={`notes-${w.id}`} type="text" value={w.notes} onChange={(e) => onUpdate(w.id, 'notes', e.target.value)} className={`${commonInputClass} ${validBorderClass}`} />
+               <Label htmlFor={`notes-${w.id}`} title="หมายเหตุ/จุดเด่น" description="Notes / Highlights" />
+              <input id={`notes-${w.id}`} type="text" value={w.notes} onChange={(e) => onUpdate(w.id, 'notes', e.target.value)} className={getInputClassName(false)} />
             </div>
-          </div>
+          </Section>
         </div>
       ))}
     </div>

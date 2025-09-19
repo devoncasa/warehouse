@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({ onAddWarehouse, onExport }) => {
             className="w-1/2 sm:w-auto flex items-center justify-center gap-2 bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-teal-800 transition-colors duration-200 text-base"
           >
             <DownloadIcon />
-            บันทึก Excel
+            บันทึกเป็นรูปภาพ
           </button>
         </div>
       </div>

@@ -3,12 +3,16 @@ import { Warehouse } from './types';
 import Header from './components/Header';
 import WarehouseTable from './components/WarehouseTable';
 import { ReportView } from './components/ReportView';
+import { ImagePreviewModal } from './components/ImagePreviewModal';
 
 // This declaration is necessary because the html2canvas library is loaded from a CDN.
 declare const html2canvas: any;
 
 const App: React.FC = () => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const nextId = useRef(1);
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -94,26 +98,28 @@ const App: React.FC = () => {
   }
 
   const exportAsJPEG = () => {
-    if (reportRef.current) {
-        // Temporarily make body visible for capture if it's offscreen
-        document.body.style.overflow = 'visible';
-        
-        html2canvas(reportRef.current, {
-            scale: 2, // Higher scale for better resolution
-            useCORS: true,
-            logging: false,
-            windowWidth: reportRef.current.scrollWidth,
-            windowHeight: reportRef.current.scrollHeight
-        }).then((canvas: HTMLCanvasElement) => {
-            const link = document.createElement('a');
-            link.download = 'warehouse_report.jpeg';
-            link.href = canvas.toDataURL('image/jpeg', 0.9); // 90% quality
-            link.click();
-            document.body.style.overflow = 'auto'; // Revert back
-        });
-    } else {
-        console.error("Report element not found for exporting.");
-    }
+    if (!reportRef.current || isGenerating) return;
+
+    setIsGenerating(true);
+    
+    // Temporarily make body visible for capture if it's offscreen
+    document.body.style.overflow = 'visible';
+    
+    html2canvas(reportRef.current, {
+        scale: 2, // Higher scale for better resolution
+        useCORS: true,
+        logging: false,
+        windowWidth: reportRef.current.scrollWidth,
+        windowHeight: reportRef.current.scrollHeight
+    }).then((canvas: HTMLCanvasElement) => {
+        const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+        setPreviewImage(imageUrl);
+    }).catch((error: any) => {
+        console.error("Error generating image:", error);
+    }).finally(() => {
+        setIsGenerating(false);
+        document.body.style.overflow = 'auto'; // Revert back
+    });
   };
 
 
@@ -121,7 +127,7 @@ const App: React.FC = () => {
     <>
       <div className="bg-stone-50 min-h-screen font-sans text-stone-800">
         <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-          <Header onAddWarehouse={addWarehouseRow} onExport={exportAsJPEG} />
+          <Header onAddWarehouse={addWarehouseRow} onExport={exportAsJPEG} isGenerating={isGenerating} />
           <div className="mt-8">
               <WarehouseTable warehouses={warehouses} onUpdate={updateWarehouse} onRemove={removeWarehouse}/>
           </div>
@@ -134,6 +140,10 @@ const App: React.FC = () => {
             <ReportView ref={reportRef} warehouses={warehouses} />
         </div>
       </div>
+
+      {previewImage && (
+        <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />
+      )}
     </>
   );
 };

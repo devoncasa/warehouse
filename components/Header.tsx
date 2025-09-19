@@ -1,13 +1,15 @@
 import React from 'react';
 import { PlusIcon } from './icons/PlusIcon';
 import { DownloadIcon } from './icons/DownloadIcon';
+import { SpinnerIcon } from './icons/SpinnerIcon';
 
 interface HeaderProps {
   onAddWarehouse: () => void;
   onExport: () => void;
+  isGenerating: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onAddWarehouse, onExport }) => {
+const Header: React.FC<HeaderProps> = ({ onAddWarehouse, onExport, isGenerating }) => {
   return (
     <header>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -27,10 +29,20 @@ const Header: React.FC<HeaderProps> = ({ onAddWarehouse, onExport }) => {
           </button>
           <button
             onClick={onExport}
-            className="w-1/2 sm:w-auto flex items-center justify-center gap-2 bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-teal-800 transition-colors duration-200 text-base"
+            disabled={isGenerating}
+            className="w-1/2 sm:w-auto flex items-center justify-center gap-2 bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-teal-800 transition-colors duration-200 text-base disabled:bg-teal-500 disabled:cursor-wait"
           >
-            <DownloadIcon />
-            บันทึกเป็นรูปภาพ
+            {isGenerating ? (
+                <>
+                    <SpinnerIcon />
+                    กำลังสร้าง...
+                </>
+            ) : (
+                <>
+                    <DownloadIcon />
+                    บันทึกเป็นรูปภาพ
+                </>
+            )}
           </button>
         </div>
       </div>

@@ -33,12 +33,22 @@ const ReportItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label
 
 
 export const ReportView = forwardRef<HTMLDivElement, ReportViewProps>(({ warehouses }, ref) => {
+  const generationTimestamp = new Date().toLocaleString('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).replace(',', '');
+
   return (
     <div ref={ref} className="bg-stone-50 p-12 font-sans">
       <header className="text-center mb-12">
         <h1 className="text-5xl font-bold text-stone-900">Warehouse Comparison Report</h1>
         <p className="text-lg text-stone-500 mt-2">
-          Generated on: {new Date().toLocaleDateString('en-CA')}
+          Generated on: {generationTimestamp}
         </p>
       </header>
 

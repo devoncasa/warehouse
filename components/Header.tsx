@@ -7,7 +7,7 @@ const Header: React.FC = () => {
         <div>
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">ตารางเปรียบเทียบโกดัง/โรงงาน</h1>
           <p className="mt-2 text-base text-slate-600 max-w-2xl">
-            เงื่อนไข: 7000–7200 ตร.ม. ขึ้นไป / ย่านบางนา (ไม่เกิน กม.36) / ราคาถูกสุด / ใช้เก็บเครื่องกรองน้ำ
+            เงื่อนไข: 7000–9000 ตร.ม. ขึ้นไป / ย่านบางนา (ไม่เกิน กม.36) / ราคาถูกสุด / ใช้เก็บเครื่องกรองน้ำ / Warehouse only
           </p>
         </div>
       </div>

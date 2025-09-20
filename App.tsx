@@ -24,7 +24,17 @@ const createNewWarehouse = (): Warehouse => ({
   floorLoad: '',
   loadingBays: '',
   hasDockLeveler: 'ไม่ระบุ',
-  roofStructure: '',
+  
+  // NEW Structure Fields
+  columnType: 'ไม่ระบุ',
+  roofFrameType: 'ไม่ระบุ',
+  roofingMaterial: 'ไม่ระบุ',
+  wallingMaterial: 'ไม่ระบุ',
+  flooringDetails: 'ไม่ระบุ',
+  doorType: 'ไม่ระบุ',
+  weatherSystems: 'ไม่ระบุ',
+  optionalSystems: 'ไม่ระบุ',
+
   electricity: '',
   waterSupply: '',
   wasteManagement: '',

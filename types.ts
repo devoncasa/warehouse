@@ -1,6 +1,11 @@
-export type YesNoUnspecified = 'ใช่' | 'ไม่ใช่' | 'ไม่ระบุ';
+export type YesNoUnspecified = 'มี' | 'ไม่มี' | 'ไม่ระบุ';
 export type Ror4Status = 'มี' | 'ไม่มี' | 'ไม่ระบุ';
 export type FloodRisk = 'ต่ำ' | 'ปานกลาง' | 'สูง' | 'ไม่มีข้อมูล';
+
+export interface Photo {
+  url: string; // Base64 image string
+  comment: string;
+}
 
 export interface Warehouse {
   id: number;
@@ -24,7 +29,16 @@ export interface Warehouse {
   floorLoad: number | '';
   loadingBays: number | '';
   hasDockLeveler: YesNoUnspecified;
-  roofStructure: string; // e.g., "Insulated, with skylights"
+
+  // NEW Structure Fields from user request
+  columnType: string;
+  roofFrameType: string;
+  roofingMaterial: string;
+  wallingMaterial: string;
+  flooringDetails: string;
+  doorType: string;
+  weatherSystems: string;
+  optionalSystems: string;
 
   // Utilities
   electricity: string;
@@ -52,7 +66,7 @@ export interface Warehouse {
   expansionPotential: string;
   
   // Photos
-  photos: string[]; // Array of Base64 image strings
+  photos: Photo[]; // Array of Photo objects
 
   // Notes
   notes: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Warehouse, YesNoUnspecified, Ror4Status, FloodRisk } from '../types';
+import { Warehouse, YesNoUnspecified, Ror4Status, FloodRisk, Photo } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PlusIcon } from './icons/PlusIcon';
 
@@ -29,9 +29,20 @@ const Label: React.FC<{ htmlFor: string; title: string; description: string }> =
 const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, onRemove }) => {
   const [errors, setErrors] = useState<Record<number, Partial<Record<keyof Warehouse, string>>>>({});
   
-  const yesNoOptions: YesNoUnspecified[] = ['ใช่', 'ไม่ใช่', 'ไม่ระบุ'];
+  const yesNoOptions: YesNoUnspecified[] = ['มี', 'ไม่มี', 'ไม่ระบุ'];
   const ror4Options: Ror4Status[] = ['มี', 'ไม่มี', 'ไม่ระบุ'];
   const floodRiskOptions: FloodRisk[] = ['ต่ำ', 'ปานกลาง', 'สูง', 'ไม่มีข้อมูล'];
+
+  const structureOptions = {
+    column: ['ไม่ระบุ', 'คอนกรีตเสริมเหล็ก (Reinforced Concrete)', 'เสาเหล็ก H-Beam / I-Beam'],
+    roofFrame: ['ไม่ระบุ', 'โครงเหล็ก (H-Beam, I-Beam, Space Frame)', 'Truss Steel (โครงข้อหมุน)'],
+    roofing: ['ไม่ระบุ', 'เมทัลชีท (Metal Sheet)', 'เมทัลชีท PU Foam / Sandwich Panel', 'แทรกแผ่นโปร่งแสง (Translucent Sheet)'],
+    walling: ['ไม่ระบุ', 'ผนังเมทัลชีท (Metal Sheet)', 'ผนังก่ออิฐฉาบปูน (Brick Wall)', 'Sandwich Panel'],
+    flooring: ['ไม่ระบุ', 'พื้นคอนกรีตเสริมเหล็ก (Reinforced Concrete)', 'พื้นคอนกรีต Heavy Duty', 'เคลือบ Epoxy / Hardened Floor'],
+    doors: ['ไม่ระบุ', 'ประตูเหล็กม้วน (Roller Shutter)', 'ประตูบานสไลด์ (Sliding Door)'],
+    weatherProtection: ['ไม่ระบุ', 'กันสาด (Canopy)', 'ระบบระบายอากาศ (Ventilation)', 'ฉนวนกันความร้อน (Roof Insulation)'],
+    optionalSystems: ['ไม่ระบุ', 'ไฟ LED High Bay', 'Solar Roof'],
+  };
 
   const handleNumericChange = (id: number, field: keyof Warehouse, value: string) => {
     const numValue = Number(value);
@@ -59,24 +70,24 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
             reader.onerror = error => reject(error);
     });
 
-    const handlePhotoUpload = async (id: number, currentPhotos: string[], files: FileList | null) => {
+    const handlePhotoUpload = async (id: number, currentPhotos: Photo[], files: FileList | null) => {
         if (!files) return;
 
-        const photoLimit = 10;
+        const photoLimit = 15;
         const remainingSlots = photoLimit - currentPhotos.length;
 
         if (files.length > remainingSlots) {
-            alert(`สามารถอัปโหลดได้อีก ${remainingSlots} รูปเท่านั้น (สูงสุด 10 รูป)`);
+            alert(`สามารถอัปโหลดได้อีก ${remainingSlots} รูปเท่านั้น (สูงสุด 15 รูป)`);
         }
 
         const filesToProcess = Array.from(files).slice(0, remainingSlots);
-        const newPhotos: string[] = [];
+        const newPhotos: Photo[] = [];
 
         for (const file of filesToProcess) {
             try {
                 const base64 = await toBase64(file);
                 if (typeof base64 === 'string') {
-                    newPhotos.push(base64);
+                    newPhotos.push({ url: base64, comment: '' });
                 }
             } catch (error) {
                 console.error("Error converting file to Base64:", error);
@@ -86,9 +97,19 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
         onUpdate(id, 'photos', [...currentPhotos, ...newPhotos]);
     };
 
-    const handleRemovePhoto = (id: number, currentPhotos: string[], indexToRemove: number) => {
+    const handleRemovePhoto = (id: number, currentPhotos: Photo[], indexToRemove: number) => {
         const newPhotos = currentPhotos.filter((_, index) => index !== indexToRemove);
         onUpdate(id, 'photos', newPhotos);
+    };
+
+    const handlePhotoCommentChange = (id: number, currentPhotos: Photo[], photoIndex: number, newComment: string) => {
+        const updatedPhotos = currentPhotos.map((photo, index) => {
+            if (index === photoIndex) {
+                return { ...photo, comment: newComment };
+            }
+            return photo;
+        });
+        onUpdate(id, 'photos', updatedPhotos);
     };
 
   // --- Refactored Styles ---
@@ -129,7 +150,7 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
               <input id={`location-${w.id}`} type="text" value={w.location} onChange={(e) => onUpdate(w.id, 'location', e.target.value)} placeholder="เช่น บางนา กม.25" className={getInputClassName(false)} />
             </div>
             <div className="lg:col-span-4">
-              <Label htmlFor={`googleMapsLink-${w.id}`} title="ลิงก์ Google Maps" description="Google Maps Link" />
+              <Label htmlFor={`googleMapsLink-${w.id}`} title="ลิงก์ Google Maps" description="Google Maps Link - Landmark near by" />
               <input id={`googleMapsLink-${w.id}`} type="url" value={w.googleMapsLink} onChange={(e) => onUpdate(w.id, 'googleMapsLink', e.target.value)} placeholder="https://maps.app.goo.gl/..." className={getInputClassName(false)} />
             </div>
              <div>
@@ -193,9 +214,59 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
               <Label htmlFor={`dockLeveler-${w.id}`} title="Dock Leveler" description="สะพานปรับระดับ" />
               <select id={`dockLeveler-${w.id}`} value={w.hasDockLeveler} onChange={(e) => onUpdate(w.id, 'hasDockLeveler', e.target.value)} className={getInputClassName(false)}>{yesNoOptions.map(o => <option key={o} value={o}>{o}</option>)}</select>
             </div>
-             <div>
-                <Label htmlFor={`roofStructure-${w.id}`} title="โครงสร้างหลังคา" description="Roof Structure" />
-                <input id={`roofStructure-${w.id}`} type="text" value={w.roofStructure} onChange={(e) => onUpdate(w.id, 'roofStructure', e.target.value)} placeholder="มีฉนวน, skylight" className={getInputClassName(false)} />
+            
+            <div className="lg:col-span-4 mt-4 pt-4 border-t border-slate-200">
+                <h4 className="text-base font-semibold text-slate-600 mb-3">โครงสร้างหลัก (Main Structure)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
+                    <div>
+                        <Label htmlFor={`columnType-${w.id}`} title="เสา" description="Column" />
+                        <select id={`columnType-${w.id}`} value={w.columnType} onChange={(e) => onUpdate(w.id, 'columnType', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.column.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <Label htmlFor={`roofFrameType-${w.id}`} title="โครงหลังคา" description="Roof Frame" />
+                        <select id={`roofFrameType-${w.id}`} value={w.roofFrameType} onChange={(e) => onUpdate(w.id, 'roofFrameType', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.roofFrame.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <Label htmlFor={`roofingMaterial-${w.id}`} title="หลังคา" description="Roofing" />
+                        <select id={`roofingMaterial-${w.id}`} value={w.roofingMaterial} onChange={(e) => onUpdate(w.id, 'roofingMaterial', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.roofing.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <Label htmlFor={`wallingMaterial-${w.id}`} title="ผนัง" description="Walling" />
+                        <select id={`wallingMaterial-${w.id}`} value={w.wallingMaterial} onChange={(e) => onUpdate(w.id, 'wallingMaterial', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.walling.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <Label htmlFor={`flooringDetails-${w.id}`} title="พื้น" description="Flooring" />
+                        <select id={`flooringDetails-${w.id}`} value={w.flooringDetails} onChange={(e) => onUpdate(w.id, 'flooringDetails', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.flooring.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <Label htmlFor={`doorType-${w.id}`} title="ประตู" description="Doors" />
+                        <select id={`doorType-${w.id}`} value={w.doorType} onChange={(e) => onUpdate(w.id, 'doorType', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.doors.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <Label htmlFor={`weatherSystems-${w.id}`} title="ระบบกันสภาพอากาศ" description="Weather Protection" />
+                        <select id={`weatherSystems-${w.id}`} value={w.weatherSystems} onChange={(e) => onUpdate(w.id, 'weatherSystems', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.weatherProtection.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <Label htmlFor={`optionalSystems-${w.id}`} title="ระบบอื่นๆ เสริม" description="Optional Systems" />
+                        <select id={`optionalSystems-${w.id}`} value={w.optionalSystems} onChange={(e) => onUpdate(w.id, 'optionalSystems', e.target.value)} className={getInputClassName(false)}>
+                            {structureOptions.optionalSystems.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                    </div>
+                </div>
             </div>
           </Section>
 
@@ -288,21 +359,31 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
 
           <Section title="9. รูปภาพ (Photos)">
             <div className="lg:col-span-4">
-                <Label htmlFor={`photos-${w.id}`} title="อัปโหลดรูปภาพ" description={`Photos (${w.photos.length} / 10)`} />
+                <Label htmlFor={`photos-${w.id}`} title="อัปโหลดรูปภาพ" description={`Photos (${w.photos.length} / 15)`} />
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {w.photos.map((photo, photoIndex) => (
-                        <div key={photoIndex} className="relative group">
-                            <img src={photo} alt={`Warehouse ${w.id} photo ${photoIndex + 1}`} className="w-full h-32 object-cover rounded-md shadow-md" />
-                            <button 
-                                onClick={() => handleRemovePhoto(w.id, w.photos, photoIndex)}
-                                className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                aria-label="Remove photo"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
+                        <div key={photoIndex} className="flex flex-col gap-2">
+                          <div className="relative group">
+                              <img src={photo.url} alt={`Warehouse ${w.id} photo ${photoIndex + 1}`} className="w-full h-32 object-cover rounded-md shadow-md" />
+                              <button 
+                                  onClick={() => handleRemovePhoto(w.id, w.photos, photoIndex)}
+                                  className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  aria-label="Remove photo"
+                              >
+                                  <svg xmlns="http://www.w.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                          </div>
+                          <input
+                              type="text"
+                              placeholder="เพิ่มคำอธิบาย..."
+                              value={photo.comment}
+                              onChange={(e) => handlePhotoCommentChange(w.id, w.photos, photoIndex, e.target.value)}
+                              className={`${getInputClassName(false)} text-sm p-1.5`}
+                              aria-label={`Comment for photo ${photoIndex + 1}`}
+                           />
                         </div>
                     ))}
-                    {w.photos.length < 10 && (
+                    {w.photos.length < 15 && (
                         <label htmlFor={`photo-upload-${w.id}`} className={`w-full h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-md cursor-pointer hover:bg-slate-50 transition-colors ${normalBorderStyles}`}>
                              <PlusIcon />
                              <span className="mt-2 text-sm text-slate-600">เพิ่มรูปภาพ</span>

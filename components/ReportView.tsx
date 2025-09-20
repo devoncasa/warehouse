@@ -34,8 +34,8 @@ export const ReportView = forwardRef<HTMLDivElement, ReportViewProps>(({ warehou
 
   const Section: React.FC<{title: string, children: React.ReactNode}> = ({title, children}) => (
       <div>
-          <h3 className="text-xl font-bold text-slate-700 mb-4">{title}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+          <h3 className="text-lg font-semibold text-slate-800 mb-3">{title}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-5">
               {children}
           </div>
       </div>
@@ -50,17 +50,17 @@ export const ReportView = forwardRef<HTMLDivElement, ReportViewProps>(({ warehou
         </p>
       </header>
 
-      <div className="space-y-12">
+      <div className="space-y-10">
         {warehouses.map((w, index) => (
-          <div key={w.id} className="bg-white p-8 rounded-xl shadow-lg page-break-inside-avoid">
-            <div className="mb-8 border-b-2 border-slate-100 pb-4">
+          <div key={w.id} className="bg-white p-6 rounded-xl shadow-lg page-break-inside-avoid">
+            <div className="mb-6 border-b-2 border-slate-100 pb-4">
                 <h2 className="text-3xl font-bold text-blue-800">
                     {w.projectName || `Warehouse Option #${index + 1}`}
                 </h2>
                 {w.projectName && <p className="text-lg text-slate-500 mt-1">Warehouse Option #{index + 1}</p>}
             </div>
             
-            <div className="space-y-8">
+            <div className="space-y-6">
                 <Section title="General Information">
                     <ReportItem label="Project Name / Owner" value={w.projectName} />
                     <ReportItem label="Location" value={w.location} />
@@ -124,7 +124,7 @@ export const ReportView = forwardRef<HTMLDivElement, ReportViewProps>(({ warehou
                 {w.photos && w.photos.length > 0 && (
                   <Section title="Photos">
                       <div className="md:col-span-3">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
                               {w.photos.map((photo, photoIndex) => (
                                   <div key={photoIndex} className="break-inside-avoid">
                                       <img 

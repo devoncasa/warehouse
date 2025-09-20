@@ -1,49 +1,14 @@
 import React from 'react';
-import { PlusIcon } from './icons/PlusIcon';
-import { DownloadIcon } from './icons/DownloadIcon';
-import { SpinnerIcon } from './icons/SpinnerIcon';
 
-interface HeaderProps {
-  onAddWarehouse: () => void;
-  onExport: () => void;
-  isGenerating: boolean;
-}
-
-const Header: React.FC<HeaderProps> = ({ onAddWarehouse, onExport, isGenerating }) => {
+const Header: React.FC = () => {
   return (
     <header>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-stone-900">ตารางเปรียบเทียบโกดัง/โรงงาน</h1>
-          <p className="mt-2 text-base text-stone-600 max-w-2xl">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">ตารางเปรียบเทียบโกดัง/โรงงาน</h1>
+          <p className="mt-2 text-base text-slate-600 max-w-2xl">
             เงื่อนไข: 7000–7200 ตร.ม. ขึ้นไป / ย่านบางนา (ไม่เกิน กม.36) / ราคาถูกสุด / ใช้เก็บเครื่องกรองน้ำ
           </p>
-        </div>
-        <div className="flex-shrink-0 flex gap-2 w-full sm:w-auto">
-          <button
-            onClick={onAddWarehouse}
-            className="w-1/2 sm:w-auto flex items-center justify-center gap-2 bg-stone-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-stone-800 transition-colors duration-200 text-base"
-          >
-            <PlusIcon />
-            เพิ่มโกดัง
-          </button>
-          <button
-            onClick={onExport}
-            disabled={isGenerating}
-            className="w-1/2 sm:w-auto flex items-center justify-center gap-2 bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-teal-800 transition-colors duration-200 text-base disabled:bg-teal-500 disabled:cursor-wait"
-          >
-            {isGenerating ? (
-                <>
-                    <SpinnerIcon />
-                    กำลังสร้าง...
-                </>
-            ) : (
-                <>
-                    <DownloadIcon />
-                    บันทึกเป็นรูปภาพ
-                </>
-            )}
-          </button>
         </div>
       </div>
     </header>

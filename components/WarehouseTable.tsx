@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Warehouse, YesNoUnspecified, Ror4Status, FloodRisk } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
+import { PlusIcon } from './icons/PlusIcon';
 
 interface WarehouseTableProps {
   warehouses: Warehouse[];
@@ -10,7 +11,7 @@ interface WarehouseTableProps {
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="pt-5">
-    <h3 className="text-lg font-semibold text-stone-700 border-b border-stone-200 pb-2 mb-4">{title}</h3>
+    <h3 className="text-lg font-semibold text-slate-700 border-b border-slate-200 pb-2 mb-4">{title}</h3>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
       {children}
     </div>
@@ -18,9 +19,9 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 );
 
 const Label: React.FC<{ htmlFor: string; title: string; description: string }> = ({ htmlFor, title, description }) => (
-    <label htmlFor={htmlFor} className="block text-base font-medium text-stone-700 mb-1.5">
+    <label htmlFor={htmlFor} className="block text-base font-medium text-slate-700 mb-1.5">
         {title}
-        <span className="block text-stone-500 font-normal text-sm">{description}</span>
+        <span className="block text-slate-500 font-normal text-sm">{description}</span>
     </label>
 );
 
@@ -50,23 +51,63 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
     onUpdate(id, field, value === '' ? '' : numValue);
   };
   
+    const toBase64 = (file: File): Promise<string | ArrayBuffer | null> => 
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+    });
+
+    const handlePhotoUpload = async (id: number, currentPhotos: string[], files: FileList | null) => {
+        if (!files) return;
+
+        const photoLimit = 10;
+        const remainingSlots = photoLimit - currentPhotos.length;
+
+        if (files.length > remainingSlots) {
+            alert(`สามารถอัปโหลดได้อีก ${remainingSlots} รูปเท่านั้น (สูงสุด 10 รูป)`);
+        }
+
+        const filesToProcess = Array.from(files).slice(0, remainingSlots);
+        const newPhotos: string[] = [];
+
+        for (const file of filesToProcess) {
+            try {
+                const base64 = await toBase64(file);
+                if (typeof base64 === 'string') {
+                    newPhotos.push(base64);
+                }
+            } catch (error) {
+                console.error("Error converting file to Base64:", error);
+            }
+        }
+        
+        onUpdate(id, 'photos', [...currentPhotos, ...newPhotos]);
+    };
+
+    const handleRemovePhoto = (id: number, currentPhotos: string[], indexToRemove: number) => {
+        const newPhotos = currentPhotos.filter((_, index) => index !== indexToRemove);
+        onUpdate(id, 'photos', newPhotos);
+    };
+
   // --- Refactored Styles ---
-  const baseInputStyles = "block w-full text-base p-2.5 border rounded-md shadow-sm transition-colors duration-200 bg-white";
-  const focusStyles = "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500";
-  const normalBorderStyles = "border-stone-300";
+  const baseInputStyles = "block w-full text-base text-black p-2.5 border rounded-md shadow-sm transition-colors duration-200 bg-white";
+  const focusStyles = "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500";
+  const normalBorderStyles = "border-slate-300";
   const errorBorderStyles = "border-red-500 text-red-900 placeholder-red-300";
 
   const getInputClassName = (hasError: boolean) => `${baseInputStyles} ${focusStyles} ${hasError ? errorBorderStyles : normalBorderStyles}`;
   
-  const disabledInputStyles = "bg-stone-100 border-stone-300 text-stone-600 cursor-not-allowed";
+  const disabledInputStyles = "bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed";
 
 
   return (
     <div className="space-y-8">
       {warehouses.map((w, index) => (
         <div key={w.id} className="bg-white p-6 rounded-lg shadow-lg relative transition-shadow hover:shadow-xl">
-          <div className="flex justify-between items-center mb-2 border-b border-stone-200 pb-4">
-            <h2 className="text-2xl font-bold text-stone-800">
+          <div className="flex justify-between items-center mb-2 border-b border-slate-200 pb-4">
+            <h2 className="text-2xl font-bold text-slate-800">
               ข้อมูลโกดัง #{index + 1}
             </h2>
             <button 
@@ -97,7 +138,7 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
               {errors[w.id]?.area && <p className="mt-1 text-sm text-red-600">{errors[w.id]?.area}</p>}
             </div>
             <div>
-              <Label htmlFor={`usableAreaBreakdown-${w.id}`} title="สัดส่วนพื้นที่" description="Area Breakdown" />
+              <Label htmlFor={`usableAreaBreakdown-${w.id}`} title="สัดส่วนพื้นที่" description="Area Breakdown (Warehouse/Office)" />
               <input id={`usableAreaBreakdown-${w.id}`} type="text" value={w.usableAreaBreakdown} onChange={(e) => onUpdate(w.id, 'usableAreaBreakdown', e.target.value)} placeholder="โกดัง 7000, ออฟฟิศ 150" className={getInputClassName(false)} />
             </div>
              <div>
@@ -242,6 +283,40 @@ const WarehouseTable: React.FC<WarehouseTableProps> = ({ warehouses, onUpdate, o
             <div className="lg:col-span-4">
                <Label htmlFor={`notes-${w.id}`} title="หมายเหตุ/จุดเด่น" description="Notes / Highlights" />
               <input id={`notes-${w.id}`} type="text" value={w.notes} onChange={(e) => onUpdate(w.id, 'notes', e.target.value)} className={getInputClassName(false)} />
+            </div>
+          </Section>
+
+          <Section title="9. รูปภาพ (Photos)">
+            <div className="lg:col-span-4">
+                <Label htmlFor={`photos-${w.id}`} title="อัปโหลดรูปภาพ" description={`Photos (${w.photos.length} / 10)`} />
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {w.photos.map((photo, photoIndex) => (
+                        <div key={photoIndex} className="relative group">
+                            <img src={photo} alt={`Warehouse ${w.id} photo ${photoIndex + 1}`} className="w-full h-32 object-cover rounded-md shadow-md" />
+                            <button 
+                                onClick={() => handleRemovePhoto(w.id, w.photos, photoIndex)}
+                                className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Remove photo"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                    ))}
+                    {w.photos.length < 10 && (
+                        <label htmlFor={`photo-upload-${w.id}`} className={`w-full h-32 flex flex-col items-center justify-center border-2 border-dashed rounded-md cursor-pointer hover:bg-slate-50 transition-colors ${normalBorderStyles}`}>
+                             <PlusIcon />
+                             <span className="mt-2 text-sm text-slate-600">เพิ่มรูปภาพ</span>
+                             <input 
+                                id={`photo-upload-${w.id}`} 
+                                type="file" 
+                                multiple 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={(e) => handlePhotoUpload(w.id, w.photos, e.target.files)}
+                            />
+                        </label>
+                    )}
+                </div>
             </div>
           </Section>
         </div>

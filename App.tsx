@@ -2,148 +2,178 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Warehouse } from './types';
 import Header from './components/Header';
 import WarehouseTable from './components/WarehouseTable';
+import FooterActions from './components/FooterActions';
 import { ReportView } from './components/ReportView';
-import { ImagePreviewModal } from './components/ImagePreviewModal';
+import ImagePreviewModal from './components/ImagePreviewModal';
+import html2canvas from 'html2canvas';
 
-// This declaration is necessary because the html2canvas library is loaded from a CDN.
-declare const html2canvas: any;
+const createNewWarehouse = (): Warehouse => ({
+  id: Date.now() + Math.random(), // Add random to avoid collision on fast adds
+  projectName: '',
+  location: '',
+  googleMapsLink: '',
+  area: '',
+  usableAreaBreakdown: '',
+  buildingType: '',
+  height: '',
+  rentPerSqm: '',
+  totalPrice: 0,
+  depositMonths: '',
+  leaseTerms: '',
+  hiddenCosts: '',
+  floorLoad: '',
+  loadingBays: '',
+  hasDockLeveler: 'ไม่ระบุ',
+  roofStructure: '',
+  electricity: '',
+  waterSupply: '',
+  wasteManagement: '',
+  hasFiberOptic: 'ไม่ระบุ',
+  hasSecurity: 'ไม่ระบุ',
+  cctv: 'ไม่ระบุ',
+  hasSprinkler: 'ไม่ระบุ',
+  fireSafetySystems: '',
+  parking: '',
+  officeFacilities: '',
+  nearExpressway: 'ไม่ระบุ',
+  logisticsProximity: '',
+  truckAccessRestrictions: '',
+  isPurpleZone: 'ไม่ระบุ',
+  hasRor4: 'ไม่ระบุ',
+  floodRisk: 'ไม่มีข้อมูล',
+  expansionPotential: '',
+  photos: [],
+  notes: '',
+});
+
+// Basic check for mobile user agent
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 const App: React.FC = () => {
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([createNewWarehouse()]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-
-  const nextId = useRef(1);
+  const [reportFilename, setReportFilename] = useState('warehouse_report.jpeg');
   const reportRef = useRef<HTMLDivElement>(null);
 
-  const createNewWarehouse = (): Warehouse => {
-    return {
-      id: nextId.current++,
-      // General
-      projectName: '',
-      location: '',
-      googleMapsLink: '',
-      area: '',
-      usableAreaBreakdown: '',
-      buildingType: '',
-      height: '',
-      // Costs & Lease
-      rentPerSqm: '',
-      totalPrice: 0,
-      depositMonths: '',
-      leaseTerms: '',
-      hiddenCosts: '',
-      // Structure & Specs
-      floorLoad: '',
-      loadingBays: '',
-      hasDockLeveler: 'ไม่ระบุ',
-      roofStructure: '',
-      // Utilities
-      electricity: '',
-      waterSupply: '',
-      wasteManagement: '',
-      hasFiberOptic: 'ไม่ระบุ',
-      // Safety & Facilities
-      hasSecurity: 'ไม่ระบุ',
-      cctv: 'ไม่ระบุ',
-      hasSprinkler: 'ไม่ระบุ',
-      fireSafetySystems: '',
-      parking: '',
-      officeFacilities: '',
-      // Logistics
-      nearExpressway: 'ไม่ระบุ',
-      logisticsProximity: '',
-      truckAccessRestrictions: '',
-      // Potential & Risks
-      isPurpleZone: 'ไม่ระบุ',
-      hasRor4: 'ไม่ระบุ',
-      floodRisk: 'ไม่มีข้อมูล',
-      expansionPotential: '',
-      // Notes
-      notes: '',
-    };
-  };
-
+  // Recalculate total price when area or rentPerSqm changes
   useEffect(() => {
-    setWarehouses([createNewWarehouse()]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setWarehouses(currentWarehouses =>
+      currentWarehouses.map(w => {
+        const area = Number(w.area) || 0;
+        const rent = Number(w.rentPerSqm) || 0;
+        const newTotalPrice = area * rent;
+        if (w.totalPrice !== newTotalPrice) {
+          return { ...w, totalPrice: newTotalPrice };
+        }
+        return w;
+      })
+    );
+  }, [warehouses]);
 
-  const addWarehouseRow = () => {
+  const handleAddWarehouse = () => {
     setWarehouses(prev => [...prev, createNewWarehouse()]);
   };
 
-  const updateWarehouse = (id: number, field: keyof Warehouse, value: any) => {
-    setWarehouses(prev => 
-      prev.map(w => {
-        if (w.id !== id) return w;
-
-        const updatedWarehouse = { ...w, [field]: value };
-        
-        const area = Number(updatedWarehouse.area);
-        const rentPerSqm = Number(updatedWarehouse.rentPerSqm);
-        if (!isNaN(area) && !isNaN(rentPerSqm)) {
-            updatedWarehouse.totalPrice = area * rentPerSqm;
-        } else {
-            updatedWarehouse.totalPrice = 0;
-        }
-        
-        return updatedWarehouse;
-      })
+  const handleUpdateWarehouse = (id: number, field: keyof Warehouse, value: any) => {
+    setWarehouses(prev =>
+      prev.map(w => (w.id === id ? { ...w, [field]: value } : w))
     );
   };
-  
-  const removeWarehouse = (id: number) => {
+
+  const handleRemoveWarehouse = (id: number) => {
+    if (warehouses.length > 1) {
       setWarehouses(prev => prev.filter(w => w.id !== id));
-  }
-
-  const exportAsJPEG = () => {
-    if (!reportRef.current || isGenerating) return;
-
+    } else {
+      alert("ไม่สามารถลบโกดังสุดท้ายได้ กรุณากรอกข้อมูลหรือเพิ่มโกดังใหม่ก่อนลบ");
+    }
+  };
+  
+  const exportAsJPEG = async () => {
+    if (!reportRef.current) return;
     setIsGenerating(true);
+
+    const firstWarehouse = warehouses[0];
+    let filename = 'warehouse_report';
+
+    if (firstWarehouse) {
+        const parts = [
+            firstWarehouse.projectName,
+            firstWarehouse.location,
+            firstWarehouse.area ? `${firstWarehouse.area}sqm` : '',
+            firstWarehouse.rentPerSqm ? `${firstWarehouse.rentPerSqm}THBpsqm` : ''
+        ].map(p => String(p).trim()).filter(Boolean);
+
+        if (parts.length > 0) {
+            filename = parts.join('-')
+              .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove invalid chars
+              .replace(/\s+/g, '-') // Replace spaces with hyphens
+              .replace(/-+/g, '-'); // Collapse multiple hyphens
+        }
+    }
     
-    // Temporarily make body visible for capture if it's offscreen
-    document.body.style.overflow = 'visible';
-    
-    html2canvas(reportRef.current, {
-        scale: 2, // Higher scale for better resolution
+    if (!filename) {
+        filename = 'warehouse_report';
+    }
+
+    try {
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
         useCORS: true,
         logging: false,
-        windowWidth: reportRef.current.scrollWidth,
-        windowHeight: reportRef.current.scrollHeight
-    }).then((canvas: HTMLCanvasElement) => {
-        const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+        backgroundColor: '#f8fafc', // Match body bg color
+      });
+      
+      const imageUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+      if (isMobile) {
+        setReportFilename(`${filename}.jpeg`);
         setPreviewImage(imageUrl);
-    }).catch((error: any) => {
-        console.error("Error generating image:", error);
-    }).finally(() => {
-        setIsGenerating(false);
-        document.body.style.overflow = 'auto'; // Revert back
-    });
+      } else {
+        const link = document.createElement('a');
+        link.download = `${filename}.jpeg`;
+        link.href = imageUrl;
+        link.click();
+      }
+
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      alert("เกิดข้อผิดพลาดขณะสร้างรูปภาพ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
 
   return (
     <>
-      <div className="bg-stone-50 min-h-screen font-sans text-stone-800">
-        <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-          <Header onAddWarehouse={addWarehouseRow} onExport={exportAsJPEG} isGenerating={isGenerating} />
-          <div className="mt-8">
-              <WarehouseTable warehouses={warehouses} onUpdate={updateWarehouse} onRemove={removeWarehouse}/>
-          </div>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <Header />
+        <main className="mt-8 mb-32">
+          <WarehouseTable
+            warehouses={warehouses}
+            onUpdate={handleUpdateWarehouse}
+            onRemove={handleRemoveWarehouse}
+          />
         </main>
       </div>
-      
-      {/* Off-screen component for JPEG export. Sized for a standard document. */}
-      <div className="absolute top-0 left-[-9999px] p-4" aria-hidden="true">
-        <div className="w-[1200px]">
-            <ReportView ref={reportRef} warehouses={warehouses} />
-        </div>
-      </div>
+      <FooterActions
+        onAddWarehouse={handleAddWarehouse}
+        onExport={exportAsJPEG}
+        isGenerating={isGenerating}
+      />
 
-      {previewImage && (
-        <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />
-      )}
+      <ImagePreviewModal
+        isOpen={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        imageUrl={previewImage}
+        filename={reportFilename}
+      />
+      
+      {/* Hidden report view for rendering to canvas */}
+      <div className="absolute -left-[9999px] top-0 w-[1440px] bg-slate-50">
+        <ReportView ref={reportRef} warehouses={warehouses} />
+      </div>
     </>
   );
 };

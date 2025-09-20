@@ -51,6 +51,9 @@ export interface Warehouse {
   floodRisk: FloodRisk;
   expansionPotential: string;
   
+  // Photos
+  photos: string[]; // Array of Base64 image strings
+
   // Notes
   notes: string;
 }
